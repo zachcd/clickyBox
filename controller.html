@@ -12,19 +12,39 @@
       font-weight: bold;
       font-family: sans-serif;
   }
-  #toucharea {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-      justify-content: center;
-      align-items: center;
+  .card {
+    width: 30vw;
+    height: 30vh;
+    margin-top: 10vh;
+    margin-bottom: 10vh;
+    margin-left: 10vw;
+    margin-right: 10vw;
+    float: left;
+  }
+  #blue {
+    background-color: blue
+  }
+  #red {
+    background-color: red
+  }
+  #yellow {
+    background-color: yellow
+  }
+  #grey {
+    background-color: DarkGray
   }
   </style>
 </head>
 <body>
-<div id="toucharea">
-    <div id="msg">touch to move</div>
-</div>
+  <input type="text" id="name">Name here </input>
+  <div class="card" id="blue">
+  </div>
+  <div class="card" id="red">
+  </div>
+  <div class="card" id="yellow">
+  </div>
+  <div class="card" id="grey">
+  </div>
 </body>
 <!--
 The following script line includes happyfuntimes which defines HFT.
@@ -37,9 +57,12 @@ const client = new HFT.GameClient();
 client.on('connect', handleConnect);
 client.on('disconnect', handleDisconnect);
 client.on('color', handleColor);
-client.on('scored', handleScored);
+client.on('dead', handleDead);
+client.on('turn', handleTurnGiven);
 
 let points = 0;
+let hand = []
+let turn = true;
 
 function handleConnect() {
   // nothing to do here though maybe we don't want to
@@ -51,54 +74,53 @@ function handleDisconnect() {
 }
 
 function handleColor(color) {
-  touchArea.style.backgroundColor = color;
+  document.body.style.backgroundColor = color;
+}
+function handleTurnGiven() {
+  turn = true;
 }
 
-function handleScored(data) {
-  points += data.points;
-  touchArea.textContent = "points: " + points;
+function handleDead() {
+  //you're dead
 }
+const blueButton = document.querySelector('#blue');
+const redButton = document.querySelector('#red');
+const greyButton = document.querySelector('#grey');
+const yellowButton = document.querySelector('#yellow');
+const nameInput = document.querySelector('#name');
 
-const touchArea = document.querySelector('#toucharea');
-touchArea.addEventListener('mousemove', handleMouseMove);
-touchArea.addEventListener('touchmove', handleTouchMove);
-touchArea.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-});
+nameInput.addEventListener('change', () => sendName(event))
 
-function handleTouchMove(event) {
-  // only handle the first touch
-  sendMoveCmd(getRelativePosition(event.touches[0], touchArea), touchArea);
-}
+blueButton.addEventListener('click', () => sendColor('blue'))
+redButton.addEventListener('click', () => sendColor('red'))
+greyButton.addEventListener('click', () => sendColor('grey'))
+yellowButton.addEventListener('click', () => sendColor('yellow'))
 
-function handleMouseMove(event) {
-  sendMoveCmd(getRelativePosition(event, touchArea), touchArea);
-}
-
-// This will generate a 'move' event in the corresponding
-// NetPlayer object in the game.
-function sendMoveCmd(position, target) {
-  // normalize the position from 0 to 1 because
-  // different players smartphones will have different size
-  // screens
-  client.sendCmd('move', {
-    x: position.x / target.clientWidth,
-    y: position.y / target.clientHeight,
-  });
-};
-
-
-function getRelativePosition(event, target) {
-  target = target || event.target;
-  var rect = target.getBoundingClientRect();
-
-  return {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top,
+function sendColor(color) {
+  if (turn){
+    switch (color) {
+      case 'blue' :
+        client.sendCmd('pickColor', 0)
+        break;
+      case 'red' :
+        client.sendCmd('pickColor', 1)
+        break;
+      case 'yellow' :
+        client.sendCmd('pickColor', 2)
+        break;
+      case 'grey' :
+        client.sendCmd('pickColor', 3)
+        break;
+    }
+    turn = false;
   }
 }
+function sendName(event) {
+  client.sendCmd('setName', event.target.value);
+}
+
+
+
 
 </script>
 </html>
-
-
