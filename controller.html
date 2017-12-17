@@ -22,13 +22,13 @@
     float: left;
   }
   #blue {
-    background-color: blue
+    background-color: rgb(28,0,128);
   }
   #red {
-    background-color: red
+    background-color: rgb(128,12,0);
   }
   #yellow {
-    background-color: yellow
+    background-color: rgb(128,108,0);
   }
   #grey {
     background-color: DarkGray
@@ -78,6 +78,7 @@ function handleColor(color) {
 }
 function handleTurnGiven() {
   turn = true;
+  sendColor('blue');
 }
 
 function handleDead() {
@@ -89,15 +90,16 @@ const greyButton = document.querySelector('#grey');
 const yellowButton = document.querySelector('#yellow');
 const nameInput = document.querySelector('#name');
 
-nameInput.addEventListener('change', () => sendName(event))
+nameInput.addEventListener('change', (event) => sendName(event))
 
-blueButton.addEventListener('click', () => sendColor('blue'))
-redButton.addEventListener('click', () => sendColor('red'))
-greyButton.addEventListener('click', () => sendColor('grey'))
-yellowButton.addEventListener('click', () => sendColor('yellow'))
+blueButton.addEventListener('mousedown', () => sendColor('blue'))
+redButton.addEventListener('mousedown', () => sendColor('red'))
+greyButton.addEventListener('mousedown', () =>sendColor('grey'))
+yellowButton.addEventListener('mousedown',() =>  sendColor('yellow'))
 
 function sendColor(color) {
   if (turn){
+        turn = false;
     switch (color) {
       case 'blue' :
         client.sendCmd('pickColor', 0)
@@ -112,7 +114,7 @@ function sendColor(color) {
         client.sendCmd('pickColor', 3)
         break;
     }
-    turn = false;
+
   }
 }
 function sendName(event) {
