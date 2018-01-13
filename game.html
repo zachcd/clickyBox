@@ -49,6 +49,7 @@
        width: 100%;
        height: 150px;
        margin-top: 30px;
+       font-size: 50px;
      }
      .playerList div {
        flex: 1;
@@ -176,6 +177,8 @@ class Game {
     return playerScores
   }
   addBoxes(player, color) {
+    console.log(player);
+    console.log(color);
     let boxesToSearch = []
     let i = 0;
     let j = 0
@@ -445,9 +448,6 @@ function render() {
   } else {
     let instructions = document.createElement("div")
     let playerCount = document.createTextNode("Players: " + globals.players.length)
-    body.appendChild(document.createElement("br"))
-    body.appendChild(document.createElement("br"))
-    body.appendChild(document.createElement("br"))
     body.appendChild(document.createElement("br"))
     body.appendChild(document.createElement("br"))
     body.appendChild(playerCount)
