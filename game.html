@@ -136,15 +136,21 @@ class Game {
           player.move = 1
       }
     })
-    if (this.timer >= 350) {
+    var scores = this.score()
+    console.log(scores)
+    var scorePos = scores.filter(score => score.score >= 1)
+    console.log(scorePos.length)
+    if (scorePos.length <= 1) {
+      this.endGame()
+    }else if (this.timer >= 1001) {
       window.setTimeout(() => {this.nextRound()}, this.timer)
     } else {
-      this.endGame()
+      this.timer = 1000
+      window.setTimeout(() => {this.nextRound()}, 1000)
     }
   }
 
   endGame() {
-
     clearInterval(this.counting)
     globals.lastScore = this.score()
     globals.currentGame = null;
@@ -234,10 +240,6 @@ class Game {
   }
 }
 function checkPicked(picked, x, y, numPlayers) {
-  console.log("checking");
-  console.log(picked);
-  console.log(x);
-  console.log(y);
   let good = true;
   if (numPlayers > 3) {
     numPlayers = 3;
@@ -402,7 +404,6 @@ function render() {
                 box.style.backgroundColor = player.color
                 box.style.width = 20/globals.currentGame.boxes.length + "vh"
                 box.style.height = 20/globals.currentGame.boxes.length + "vh"
-                console.log("corner")
                 cell.appendChild(box)
               }
               if (!topBorder && !rightBorder && globals.currentGame.boxes[rowIndex-1][columnIndex+1].player !== box.player) {
@@ -413,7 +414,6 @@ function render() {
                 box.style.backgroundColor = player.color
                 box.style.width = 20/globals.currentGame.boxes.length + "vh"
                 box.style.height = 20/globals.currentGame.boxes.length + "vh"
-                console.log("corner")
                 cell.appendChild(box)
               }
               if (!bottomBorder && !leftBorder && globals.currentGame.boxes[rowIndex+1][columnIndex-1].player !== box.player) {
@@ -424,7 +424,6 @@ function render() {
                 box.style.backgroundColor = player.color
                 box.style.width = 20/globals.currentGame.boxes.length + "vh"
                 box.style.height = 20/globals.currentGame.boxes.length + "vh"
-                console.log("corner")
                 cell.appendChild(box)
               }
               if (!bottomBorder && !rightBorder && globals.currentGame.boxes[rowIndex+1][columnIndex+1].player !== box.player) {
@@ -435,7 +434,6 @@ function render() {
                 box.style.backgroundColor = player.color
                 box.style.width = 20/globals.currentGame.boxes.length + "vh"
                 box.style.height = 20/globals.currentGame.boxes.length + "vh"
-                console.log("corner")
                 cell.appendChild(box)
               }
             }
@@ -465,7 +463,7 @@ function render() {
     let playerList = document.createElement("div")
     playerList.className = "playerList";
     globals.players.forEach((player) => {
-      let playerDiv = document.createElement("div");
+      let playerDiv = document.createElement("h2");
       playerDiv.appendChild(document.createTextNode(player.name));
       playerDiv.style.backgroundColor = player.color;
       playerList.appendChild(playerDiv);
