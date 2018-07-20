@@ -44,6 +44,21 @@
          width: 100vw;
          height: 100vh;
      }
+     .playerList {
+       display: flex;
+       width: 100%;
+       height: 150px;
+       margin-top: 30px;
+       font-size: 50px;
+     }
+     .playerList div {
+       flex: 1;
+       padding-top: 70px;
+       text-align: center;
+     }
+     table {
+       border-spacing: 0px;
+     }
   </style>
 </head>
 <body>
@@ -87,13 +102,21 @@ class Game {
     this.timer = 15000
     this.timeLeft = 15000
     this.players = []
+    let picked = [];
     for (var o= 0; o < globals.players.length; o++ ) {
       globals.players[o].move = 1
       globals.players[o].netPlayer.sendCmd('turn');
       globals.players[o].currentGameID = o
 
       this.players.push(globals.players[o])
-      this.boxes[randInt(parseInt(Math.log(numPlayers) * 10))][randInt(parseInt(Math.log(numPlayers) * 15))].player = o
+      let x = randInt(parseInt(Math.log(numPlayers) * 10));
+      let y = randInt(parseInt(Math.log(numPlayers) * 15));
+      while (!checkPicked(picked, x, y, numPlayers)) {
+        x = randInt(parseInt(Math.log(numPlayers) * 10));
+        y = randInt(parseInt(Math.log(numPlayers) * 15));
+      }
+      this.boxes[x][y].player = o
+      picked.push({'x': x, 'y': y});
 
     }
     this.players = globals.players
@@ -113,15 +136,21 @@ class Game {
           player.move = 1
       }
     })
-    if (this.timer >= 350) {
+    var scores = this.score()
+    console.log(scores)
+    var scorePos = scores.filter(score => score.score >= 1)
+    console.log(scorePos.length)
+    if (scorePos.length <= 1) {
+      this.endGame()
+    }else if (this.timer >= 1001) {
       window.setTimeout(() => {this.nextRound()}, this.timer)
     } else {
-      this.endGame()
+      this.timer = 1000
+      window.setTimeout(() => {this.nextRound()}, 1000)
     }
   }
 
   endGame() {
-
     clearInterval(this.counting)
     globals.lastScore = this.score()
     globals.currentGame = null;
@@ -142,13 +171,9 @@ class Game {
         }
       })
     })
-    console.log(playerScores)
     globals.players.forEach((player) => {
-      console.log(player)
       if (player.currentGameID !== undefined || player.currentGameID !== null) {
         playerScores[player.currentGameID]= {name: player.name, score: playerScores[player.currentGameID]}
-        console.log(player)
-        console.log(playerScores[player.currentGameID])
         if (playerScores[player.currentGameID].score > globals.topScore) {
           globals.topScore = playerScores[player.currentGameID].score
           globals.topPlayer = player.name
@@ -158,6 +183,8 @@ class Game {
     return playerScores
   }
   addBoxes(player, color) {
+    console.log(player);
+    console.log(color);
     let boxesToSearch = []
     let i = 0;
     let j = 0
@@ -210,8 +237,22 @@ class Game {
   }
  countdown() {
     this.timeLeft = this.timeLeft -100
-    console.log(this.timeLeft);
   }
+}
+function checkPicked(picked, x, y, numPlayers) {
+  let good = true;
+  if (numPlayers > 3) {
+    numPlayers = 3;
+  }
+  picked.forEach((player) => {
+    if (Math.abs(player.x - x) < numPlayers ) {
+      good =false;
+    }
+    if (Math.abs(player.y - y) < numPlayers  ) {
+      good =false;
+    }
+  })
+   return good;
 }
 
 function contains(boxes, box) {
@@ -253,10 +294,14 @@ class Player {
     netPlayer.addEventListener('disconnect', Player.prototype.disconnect.bind(this));
     netPlayer.addEventListener('pickColor', Player.prototype.pickColor.bind(this));
     netPlayer.addEventListener('setName', Player.prototype.setName.bind(this));
+    netPlayer.addEventListener('clickEvent', Player.prototype.clickFired.bind(this));
     netPlayer.sendCmd('color', this.color);
 
   }
 
+  clickFired(ev) {
+    console.log(ev)
+  }
   setName(name) {
     this.name = name
   }
@@ -268,9 +313,10 @@ class Player {
   }
 
   pickColor(color) {
+    console.log("please work thanks")
     if (!globals.currentGame && globals.players.length > 1 && !globals.dontStart) {
       globals.currentGame = new Game(globals.players.length)
-    } else if (this.move == 1) {
+    } else if (this.move == 1 && globals.currentGame) {
       this.move = 0
       globals.currentGame.addBoxes(this.currentGameID, color)
     }
@@ -281,7 +327,6 @@ const server = new happyfuntimes.GameServer();
 
 // A new player has arrived.
 server.on('playerconnect', function(netPlayer) {
-  console.log("Gordon connected")
   globals.players.push(new Player(netPlayer, "Player" + (++globals.playerId)));
 
 });
@@ -303,42 +348,98 @@ function render() {
 
   if (globals.currentGame != null ) {
     timer.style.width = (globals.currentGame.timer - globals.currentGame.timeLeft) / globals.currentGame.timer  * 100+ "%"
-    timer.style.height = "7vh"
+    timer.style.height = "10vh"
     timer.style.backgroundColor = "red"
     body.appendChild(timer)
     body.appendChild(table)
-    globals.currentGame.boxes.forEach((row) => {
+    globals.currentGame.boxes.forEach((row, rowIndex) => {
       tRow = document.createElement("tr")
       table.appendChild(tRow)
-      row.forEach((box) => {
+      row.forEach((box, columnIndex) => {
         cell = document.createElement("td")
+        cell.style.boxSizing = "border-box";
+        cell.style.padding = 0;
         switch (box.color) {
           case 0:
-            cell.style.backgroundColor = 'blue'
-            cell.style.border = 20/globals.currentGame.boxes.length + "vh solid blue"
+            cell.style.backgroundColor = 'rgb(28,0,128)';
           break;
           case 1:
-            cell.style.backgroundColor = 'red'
-            cell.style.border = 20/globals.currentGame.boxes.length + "vh solid red"
+            cell.style.backgroundColor = 'rgb(128,12,0)';
           break;
           case 2:
-            cell.style.backgroundColor = 'brown'
-            cell.style.border = 20/globals.currentGame.boxes.length + "vh solid yellow"
+            cell.style.backgroundColor = 'rgb(128,108,0)';
           break;
           case 3:
             cell.style.backgroundColor = 'gray'
-            cell.style.border = 20/globals.currentGame.boxes.length + "vh solid gray"
           break;
         }
-        cell.style.width = 50/globals.currentGame.boxes.length + "vw"
+        cell.style.width = 100/globals.currentGame.boxes[0].length + "vw"
 
-        cell.style.height = 48/globals.currentGame.boxes.length + "vh"
+        cell.style.height = 90/globals.currentGame.boxes.length + "vh"
+        cell.style.position = "relative";
         globals.currentGame.players.forEach( (player) => {
           if (box.player | box.player == 0) {
             if (box.player == player.currentGameID) {
-                    cell.style.border = 20/globals.currentGame.boxes.length + "vh solid " + player.color
-                    cell.style.width = (50/globals.currentGame.boxes.length ) + "vw"
-                    cell.style.height = (48/globals.currentGame.boxes.length)  + "vh"
+              let topBorder = false;
+              let bottomBorder = false;
+              let leftBorder = false;
+              let rightBorder = false;
+              if (rowIndex === 0 || globals.currentGame.boxes[rowIndex-1][columnIndex].player !== box.player) {
+                cell.style.borderTop = 20/globals.currentGame.boxes.length + "vh solid " + player.color
+                topBorder = true;
+              }
+              if (columnIndex === 0 || globals.currentGame.boxes[rowIndex][columnIndex-1].player !== box.player) {
+                cell.style.borderLeft = 20/globals.currentGame.boxes.length + "vh solid " + player.color
+                leftBorder = true;
+              }
+              if ((columnIndex + 1) >= globals.currentGame.boxes[rowIndex].length || globals.currentGame.boxes[rowIndex][columnIndex+1].player !== box.player) {
+                cell.style.borderRight = 20/globals.currentGame.boxes.length + "vh solid " + player.color
+                rightBorder = true;
+              }
+              if ((rowIndex + 1) >= globals.currentGame.boxes.length || globals.currentGame.boxes[rowIndex+1][columnIndex].player !== box.player) {
+                cell.style.borderBottom = 20/globals.currentGame.boxes.length + "vh solid " + player.color
+                bottomBorder = true;
+              }
+              if (!topBorder && !leftBorder && globals.currentGame.boxes[rowIndex-1][columnIndex-1].player !== box.player) {
+                let box = document.createElement("div")
+                box.style.position = "absolute";
+                box.style.top = 0;
+                box.style.left = 0;
+                box.style.backgroundColor = player.color
+                box.style.width = 20/globals.currentGame.boxes.length + "vh"
+                box.style.height = 20/globals.currentGame.boxes.length + "vh"
+                cell.appendChild(box)
+              }
+              if (!topBorder && !rightBorder && globals.currentGame.boxes[rowIndex-1][columnIndex+1].player !== box.player) {
+                let box = document.createElement("div")
+                box.style.position = "absolute";
+                box.style.top = 0;
+                box.style.right = 0;
+                box.style.backgroundColor = player.color
+                box.style.width = 20/globals.currentGame.boxes.length + "vh"
+                box.style.height = 20/globals.currentGame.boxes.length + "vh"
+                cell.appendChild(box)
+              }
+              if (!bottomBorder && !leftBorder && globals.currentGame.boxes[rowIndex+1][columnIndex-1].player !== box.player) {
+                let box = document.createElement("div")
+                box.style.position = "absolute";
+                box.style.bottom = 0;
+                box.style.left = 0;
+                box.style.backgroundColor = player.color
+                box.style.width = 20/globals.currentGame.boxes.length + "vh"
+                box.style.height = 20/globals.currentGame.boxes.length + "vh"
+                cell.appendChild(box)
+              }
+              if (!bottomBorder && !rightBorder && globals.currentGame.boxes[rowIndex+1][columnIndex+1].player !== box.player) {
+                let box = document.createElement("div")
+                box.style.position = "absolute";
+                box.style.bottom = 0;
+                box.style.right = 0;
+                box.style.backgroundColor = player.color
+                box.style.width = 20/globals.currentGame.boxes.length + "vh"
+                box.style.height = 20/globals.currentGame.boxes.length + "vh"
+                cell.appendChild(box)
+              }
             }
           }
         })
@@ -351,9 +452,6 @@ function render() {
     let playerCount = document.createTextNode("Players: " + globals.players.length)
     body.appendChild(document.createElement("br"))
     body.appendChild(document.createElement("br"))
-    body.appendChild(document.createElement("br"))
-    body.appendChild(document.createElement("br"))
-    body.appendChild(document.createElement("br"))
     body.appendChild(playerCount)
     instructions.appendChild(document.createElement("br"))
     instructions.appendChild(document.createTextNode("You can take other squares by tapping on the color on your phone."))
@@ -363,12 +461,16 @@ function render() {
     instructions.appendChild(document.createTextNode("Turns will get faster as the game continues"))
     instructions.appendChild(document.createElement("br"))
     instructions.appendChild(document.createElement("br"))
-    if (globals.players.length >1) {
+    if (globals.players.length > 1) {
       instructions.appendChild(document.createTextNode("Press a colored button on your phone to begin a game."))
     }
-    let playerList = document.createElement("ul")
+    let playerList = document.createElement("div")
+    playerList.className = "playerList";
     globals.players.forEach((player) => {
-      playerList.appendChild(document.createElement("li").appendChild(document.createTextNode(player.name)))
+      let playerDiv = document.createElement("h2");
+      playerDiv.appendChild(document.createTextNode(player.name));
+      playerDiv.style.backgroundColor = player.color;
+      playerList.appendChild(playerDiv);
     })
     body.appendChild(instructions)
     body.appendChild(playerList)
@@ -376,6 +478,7 @@ function render() {
     let topScorer = document.createTextNode("Top Score: "  + globals.topScore + " by " + globals.topPlayer)
     body.appendChild(topScorer)
     let lastGame = document.createElement("p")
+    lastGame.style.fontSize = "30px";
     let lastScore = document.createTextNode("Last game: ")
     lastGame.appendChild(lastScore)
     globals.lastScore.forEach((score) => {
