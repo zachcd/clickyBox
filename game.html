@@ -294,10 +294,14 @@ class Player {
     netPlayer.addEventListener('disconnect', Player.prototype.disconnect.bind(this));
     netPlayer.addEventListener('pickColor', Player.prototype.pickColor.bind(this));
     netPlayer.addEventListener('setName', Player.prototype.setName.bind(this));
+    netPlayer.addEventListener('clickEvent', Player.prototype.clickFired.bind(this));
     netPlayer.sendCmd('color', this.color);
 
   }
 
+  clickFired(ev) {
+    console.log(ev)
+  }
   setName(name) {
     this.name = name
   }
@@ -309,6 +313,7 @@ class Player {
   }
 
   pickColor(color) {
+    console.log("please work thanks")
     if (!globals.currentGame && globals.players.length > 1 && !globals.dontStart) {
       globals.currentGame = new Game(globals.players.length)
     } else if (this.move == 1 && globals.currentGame) {
@@ -322,7 +327,6 @@ const server = new happyfuntimes.GameServer();
 
 // A new player has arrived.
 server.on('playerconnect', function(netPlayer) {
-  console.log("Gordon connected")
   globals.players.push(new Player(netPlayer, "Player" + (++globals.playerId)));
 
 });

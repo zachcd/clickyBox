@@ -91,10 +91,10 @@ const nameInput = document.querySelector('#name');
 
 nameInput.addEventListener('change', (event) => sendName(event))
 
-blueButton.addEventListener('mousedown', () => sendColor('blue'))
-redButton.addEventListener('mousedown', () => sendColor('red'))
-greyButton.addEventListener('mousedown', () =>sendColor('grey'))
-yellowButton.addEventListener('mousedown',() =>  sendColor('yellow'))
+blueButton.addEventListener('touchstart', () => sendColor('blue'))
+redButton.addEventListener('touchstart', () => sendColor('red'))
+greyButton.addEventListener('touchstart', () =>sendColor('grey'))
+yellowButton.addEventListener('touchstart',() =>  sendColor('yellow'))
 
 function sendColor(color) {
   if (turn){
@@ -116,6 +116,10 @@ function sendColor(color) {
 
   }
 }
+function sendEvent(event) {
+  client.sendCmd('clickEvent', event.type)
+}
+
 function sendName(event) {
   client.sendCmd('setName', event.target.value);
 }
